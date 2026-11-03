@@ -59,19 +59,61 @@ O plugin cria a pasta `Metta-Resgate` na pasta de trabalho:
 
 - A **Clint** conectada.
 - O **Google Drive** conectado (ou a pasta do Drive no computador). Se não conseguir baixar um anúncio, ele pede para o usuário arrastar o arquivo para o chat.
-- Para **enviar pela Clint**: a chave da API da Clint no computador do usuário (veja abaixo) e um número WhatsApp Oficial.
+- Para **enviar pela Clint**: a configuração de envio abaixo (chave da Clint e, no Cowork, a liberação de rede) e um número WhatsApp Oficial.
 
-## Chave da Clint para o envio
+## Envio pela Clint: configuração (uma vez)
 
-O conector da Clint lê os dados, mas não envia mensagem. Quem envia é o Claude, pela API da Clint, e para isso ele precisa da chave.
+O conector da Clint lê os dados, mas não envia mensagem. Quem envia é o Claude, pela API da Clint. Para isso, três coisas precisam estar prontas. O envio funciona no **Cowork** e no **Claude Code**. No chat não funciona, porque o chat não guarda pasta de uma conversa para outra.
 
-1. Na primeira vez que o usuário pede um envio, o Claude cria o arquivo `Metta-Resgate/chave-clint.env` na pasta de trabalho e tenta abrir no editor de texto. Se não abrir sozinho, o Claude diz onde o arquivo está.
-2. O usuário cola a chave logo depois de `CLINT_API_TOKEN=`, salva e avisa o Claude.
-3. O Claude testa a chave e mostra os números WhatsApp Oficial conectados.
+### 1. Gerar a chave na Clint
 
-A chave nunca vai pelo chat, nunca entra neste repositório e só o script do envio lê o arquivo. Quem gera a chave é um administrador da Clint, em Configurações > Segurança > API. O melhor é uma chave só para o plugin, com permissão apenas para o que o envio usa (mensagens, conversas e números).
+Só um administrador da Clint vê essa tela.
 
-No **Cowork** e no **chat**, o administrador do Claude da empresa precisa liberar o endereço `api.clint.digital` nas configurações de rede (Configurações da organização > Capacidades). No **Claude Code** não precisa. Sem essa liberação, o Claude avisa e o envio é feito pelo usuário, na caixa da Clint.
+1. Na Clint, clique no avatar no menu lateral e abra **Configurações**.
+2. No grupo **Segurança**, clique em **API**.
+3. Se a tela mostrar **Chaves de API**:
+   1. Clique em **Nova chave**.
+   2. Em **Nome**, escreva `Plugin resgate` (um nome por pessoa ajuda a saber quem usa).
+   3. Em **Permissões**, marque só o que o envio usa: **Escrita** em Mensagens e **Leitura** em conversas, contatos e canais (números). Se faltar alguma, o plugin avisa que a Clint recusou a chave.
+   4. Clique em **Gerar chave** e depois em **Copiar**. A chave aparece inteira só nessa hora. Se perder, gere outra.
+   5. Clique em **Concluir**.
+4. Se a tela não tiver **Chaves de API**, ela mostra um token único. Clique em **Copiar**. Esse token dá acesso total à conta da Clint: trate como senha.
+
+Para cortar o acesso de uma chave, clique em **Revogar** na mesma tela. Vale na hora.
+
+### 2. Colocar a chave no arquivo
+
+1. No Claude, peça um envio, por exemplo `Envia pela Clint a mensagem do lead`.
+2. Na primeira vez, o Claude cria o arquivo `chave-clint.env` dentro da pasta `Metta-Resgate` e tenta abrir no editor de texto. Se não abrir sozinho, ele diz onde o arquivo está.
+   - **Cowork:** a pasta `Metta-Resgate` fica dentro da pasta que o usuário escolheu para a tarefa.
+   - **Claude Code:** fica na pasta em que o Claude foi aberto.
+3. No arquivo, cole a chave logo depois do sinal de igual da linha `CLINT_API_TOKEN=`, na mesma linha, sem espaço e sem aspas.
+4. Salve, feche e diga "pronto" ao Claude.
+5. O Claude testa a chave e mostra os números WhatsApp Oficial conectados. A partir daí, envia quando o usuário pedir.
+
+A chave nunca vai pelo chat e nunca entra neste repositório. Só o script do envio lê o arquivo. Se alguém colar a chave na conversa, o Claude não usa e pede para colar no arquivo.
+
+### 3. Liberar a Clint na rede do Claude (só no Cowork)
+
+O código que o Claude roda no Cowork só acessa os endereços liberados na conta. Por padrão a Clint não está liberada. No **Claude Code** este passo não é necessário.
+
+**Plano Team ou Enterprise** (quem faz é o Proprietário da organização no Claude):
+
+1. Em claude.ai, abra **Configurações da organização > Capacidades** (Organization settings > Capabilities): https://claude.ai/admin-settings/capabilities
+2. Em **Execução de código e criação de arquivos** (Code execution and file creation), deixe ligado.
+3. Ligue **Permitir saída de rede** (Allow network egress).
+4. Em **Lista de domínios permitidos** (Domain allowlist), escolha **Gerenciadores de pacotes e domínios específicos** (Package managers and specific domains).
+5. Em **Domínios adicionais permitidos** (Additional allowed domains), adicione `api.clint.digital`. Se já houver outros domínios, mantenha e só acrescente.
+6. Salve.
+
+**Plano individual** (Pro ou Max; a própria pessoa faz):
+
+1. No Claude, clique no seu nome no canto inferior esquerdo e abra **Configurações > Capacidades** (Settings > Capabilities): https://claude.ai/settings/capabilities
+2. Siga os passos 2 a 5 acima.
+
+Depois de liberar, abra uma **tarefa nova** no Cowork. A tarefa que já estava aberta continua com a regra antiga.
+
+Se, mesmo liberado, o Claude disser "Sem acesso a api.clint.digital", há relatos de falha do Claude em respeitar essa lista. Nesse caso, use o Claude Code ou envie pela caixa da Clint.
 
 ## Instalar pelo Claude Code (opcional)
 
