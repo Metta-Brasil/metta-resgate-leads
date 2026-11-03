@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Prepara o anúncio para leitura e para envio. Precisa de ffmpeg e ffprobe no PATH.
+"""Lê o anúncio em vídeo. Precisa de ffmpeg e ffprobe; para transcrever, faster-whisper (pip install faster-whisper).
 
-  video <arquivo> --id ID            quadros para ler o texto da tela, áudio, transcrição e versão leve (até 16 MB)
-  imagens <arquivos...> --id ID      copia na ordem das lâminas; imagem acima de 5 MB vira JPEG
-  conferir <arquivos...>             confere formato e tamanho contra os limites da Meta
+  video <arquivo> --id ID            transcrição da fala, quadros para ler o texto da tela e versão leve (até 16 MB)
+  conferir <arquivos...>             confere tamanho contra os limites do WhatsApp
 
-A saída vai para <raiz>/biblioteca/arquivos/<ID>/ (raiz padrão: ~/Metta-Resgate).
+A saída vai para Metta-Resgate/criativos/arquivos/<ID>/ na pasta de trabalho.
 Limites da Meta (Cloud API, mídia): vídeo MP4 H.264 + AAC até 16 MB; imagem JPEG/PNG até 5 MB, lado até 4.096 px.
 """
-import argparse, json, os, re, shutil, subprocess, sys
+import argparse, json, os, shutil, subprocess, sys
 
-RAIZ_PADRAO = os.path.expanduser("~/Metta-Resgate")
+RAIZ_PADRAO = os.path.join(os.getcwd(), "Metta-Resgate")
 MAX_VIDEO = 16 * 1024 * 1024
 MAX_IMG = 5 * 1024 * 1024
 ALVO_VIDEO = int(15.0 * 1024 * 1024)  # folga sob o limite
@@ -22,7 +21,7 @@ def exige(prog):
 
 
 def pasta_saida(raiz, id_):
-    p = os.path.join(os.path.expanduser(raiz), "biblioteca", "arquivos", id_)
+    p = os.path.join(os.path.expanduser(raiz), "criativos", "arquivos", id_)
     os.makedirs(p, exist_ok=True)
     return p
 
@@ -97,29 +96,6 @@ def cmd_video(a):
     print(json.dumps(res, ensure_ascii=False, indent=1))
 
 
-def chave_lamina(caminho):
-    nums = re.findall(r"\d+", os.path.basename(caminho))
-    return [int(n) for n in nums[-2:]] if nums else [0]
-
-
-def cmd_imagens(a):
-    out = pasta_saida(a.raiz, a.id)
-    arqs = sorted(a.arquivos, key=chave_lamina)
-    saidas = []
-    for i, src in enumerate(arqs, 1):
-        ext = os.path.splitext(src)[1].lower()
-        dst = os.path.join(out, f"{a.id}_{i:02d}{ext}")
-        if os.path.getsize(src) > MAX_IMG or ext == ".webp":
-            exige("ffmpeg")
-            dst = os.path.join(out, f"{a.id}_{i:02d}.jpg")
-            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", src, "-vf",
-                            "scale='min(2000,iw)':-2", "-q:v", "3", dst], check=True)
-        else:
-            shutil.copyfile(src, dst)
-        saidas.append({"origem": src, "envio": dst, "mb": round(os.path.getsize(dst) / 1024 / 1024, 2)})
-    print(json.dumps({"id": a.id, "ordem": saidas}, ensure_ascii=False, indent=1))
-
-
 def cmd_conferir(a):
     ok = True
     for f in a.arquivos:
@@ -137,7 +113,6 @@ def main():
     p.add_argument("--raiz", default=os.environ.get("RESGATE_RAIZ", RAIZ_PADRAO))
     s = p.add_subparsers(dest="cmd", required=True)
     x = s.add_parser("video"); x.add_argument("arquivo"); x.add_argument("--id", required=True); x.set_defaults(f=cmd_video)
-    x = s.add_parser("imagens"); x.add_argument("arquivos", nargs="+"); x.add_argument("--id", required=True); x.set_defaults(f=cmd_imagens)
     x = s.add_parser("conferir"); x.add_argument("arquivos", nargs="+"); x.set_defaults(f=cmd_conferir)
     a = p.parse_args()
     a.f(a)

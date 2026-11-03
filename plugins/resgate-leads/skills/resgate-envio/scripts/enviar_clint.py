@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Envio pela API da Clint (só número WhatsApp Oficial). Usado pela skill resgate-envio.
 
-Token: variável CLINT_API_TOKEN ou arquivo ~/Metta-Resgate/.clint_token (uma linha, chmod 600).
+Token: variável CLINT_API_TOKEN ou arquivo Metta-Resgate/.clint_token na pasta de trabalho (uma linha).
 Use uma chave de API com permissão só de leitura de conversas/contatos e escrita de mensagens.
 
 Comandos (os três primeiros só leem):
@@ -12,23 +12,23 @@ Comandos (os três primeiros só leem):
          sem --confirmo, só mostra o que seria enviado (nada sai)
 
 Antes de enviar, o script confere: número oficial e conectado; nenhuma mensagem nova na conversa
-depois de --lida-ate; janela de 24 h aberta (para texto e mídia); horário comercial; envio repetido.
+depois de --lida-ate; janela de 24 h aberta (para texto e mídia); envio repetido.
 Erro da API volta como está, sem nova tentativa.
 """
 import argparse, datetime, hashlib, json, os, sys, urllib.error, urllib.parse, urllib.request
 
 API = "https://api.clint.digital"
-RAIZ = os.path.expanduser(os.environ.get("RESGATE_RAIZ", "~/Metta-Resgate"))
+RAIZ = os.environ.get("RESGATE_RAIZ") or os.path.join(os.getcwd(), "Metta-Resgate")
 TZ = datetime.timezone(datetime.timedelta(hours=-3))
 
 
 def token():
     t = os.environ.get("CLINT_API_TOKEN")
-    p = os.path.join(RAIZ, ".clint_token")
-    if not t and os.path.exists(p):
-        t = open(p).read().strip()
+    for p in (os.path.join(RAIZ, ".clint_token"), os.path.expanduser("~/Metta-Resgate/.clint_token")):
+        if not t and os.path.exists(p):
+            t = open(p).read().strip()
     if not t:
-        sys.exit("Sem token da Clint. Defina CLINT_API_TOKEN ou crie ~/Metta-Resgate/.clint_token")
+        sys.exit("Sem token da Clint. Peça o token e grave em Metta-Resgate/.clint_token")
     return t
 
 
@@ -95,15 +95,6 @@ def mensagens_depois(chat_id, desde):
     return [m for m in dados(r) if iso(m["created_at"]) > desde]
 
 
-def horario_ok():
-    cfg_p = os.path.join(RAIZ, "config.json")
-    h = json.load(open(cfg_p)).get("horario_comercial", {}) if os.path.exists(cfg_p) else {}
-    agora = datetime.datetime.now(TZ)
-    ini, fim = h.get("inicio", "09:00"), h.get("fim", "18:00")
-    dentro = ini <= agora.strftime("%H:%M") <= fim and agora.weekday() < 5
-    return dentro, f"{agora:%a %H:%M} (permitido seg-sex {ini}-{fim})"
-
-
 def cmd_enviar(a):
     problemas = []
     # 1. número oficial e conectado
@@ -130,11 +121,7 @@ def cmd_enviar(a):
             problemas.append("janela de 24 h fechada neste número: só modelo aprovado")
     if chat_num and chat_num.get("thread_ownership") not in (None, "", "CLINT"):
         problemas.append(f"a conversa está com outro parceiro ({chat_num.get('thread_ownership')})")
-    # 4. horário
-    ok, quando = horario_ok()
-    if not ok:
-        problemas.append(f"fora do horário comercial: {quando}")
-    # 5. corpo
+    # 4. corpo
     texto = open(a.arquivo_texto, encoding="utf-8").read().strip() if a.arquivo_texto else (a.texto or "")
     if "[" in texto or "]" in texto:
         problemas.append("o texto ainda tem colchete")
@@ -159,7 +146,8 @@ def cmd_enviar(a):
         if a.tipo == "documento":
             corpo["filename"] = a.nome_arquivo or "anuncio.pdf"
         rota = {"imagem": "/v2/messages/image", "video": "/v2/messages/video", "documento": "/v2/messages/document"}[a.tipo]
-    # 6. repetido
+    # 5. repetido
+    os.makedirs(RAIZ, exist_ok=True)
     log = os.path.join(RAIZ, "envios.jsonl")
     chave = hashlib.sha256(json.dumps([a.contato, rota, corpo.get("message"), corpo.get("url"),
                                        corpo.get("template_id"), corpo.get("parameters")], sort_keys=True).encode()).hexdigest()

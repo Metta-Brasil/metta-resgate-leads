@@ -1,7 +1,8 @@
 {
   "name": "resgate-leads",
-  "description": "Resgate dos leads da Campanha Resgate na Clint: biblioteca de anúncios, lote com travas, mensagens 1, 2 e 3 prontas para a SDR e envio opcional pela Clint.",
+  "description": "Resgate dos leads da Campanha Resgate na Clint: pesquisa os negócios, acha e lê no Drive o anúncio que converteu cada lead e escreve a mensagem para a SDR enviar. Envia pela Clint quando ela pedir.",
   "author": {
     "name": "Metta Brasil"
-  }
+  },
+  "version": "2.0.0"
 }

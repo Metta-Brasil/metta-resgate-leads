@@ -1,148 +1,85 @@
 ---
 name: resgate-leads
-description: Use quando for trabalhar a Campanha Resgate da Metta na Clint (leads que nunca tiveram reunião), ao montar um lote de resgate, ao pedir para ver quem respondeu, ou quando a SDR colar a resposta de um lead do resgate. Lê o lead na Clint, aplica as travas, monta o dossiê e escreve a próxima mensagem (1, 2 ou 3) com o anúncio da biblioteca, conferida e pronta para a SDR aprovar e enviar.
+description: Use quando a Larissa (ou outra SDR) pedir para trabalhar leads da Campanha Resgate na Clint, ou disser que um lead do resgate respondeu. Pesquisa os negócios, puxa as informações, identifica o anúncio que converteu o lead, acha esse anúncio no Drive, lê e guarda a copy, e escreve a mensagem para ela enviar, com base nos exemplos da Larissa.
 ---
 
-# Resgate de leads (Campanha Resgate)
+# Resgate de leads
 
-Para cada lead da origem "Campanha Resgate" na Clint, a skill descobre em que ponto da conversa ele está e prepara a próxima mensagem, pronta para a SDR:
+A lógica é esta, nesta ordem:
 
-1. **Mensagem 1 (ativação):** confirma se o número ainda é do lead.
-2. **Mensagem 2 (anúncio + dor):** só depois de o próprio lead confirmar. Vai com o anúncio pelo qual ele se cadastrou.
-3. **Mensagem 3 (resposta):** escrita a partir do que ele respondeu à mensagem 2, para levar ao agendamento do diagnóstico.
+1. Pesquisar os negócios na Clint, com o critério do pedido.
+2. Puxar as informações de cada negócio.
+3. Identificar o anúncio que converteu o lead.
+4. Achar esse anúncio no Drive, baixar, ler e guardar.
+5. Escrever a mensagem com o contexto da conversa, as informações do negócio e a copy do anúncio, usando como base os exemplos da Larissa.
+6. Se ela pedir, enviar pela Clint (skill `resgate-envio`).
 
-**Duas regras que valem para tudo:**
-- Nenhuma mensagem é montada sem ler antes a conversa atual do lead na Clint, em todos os números.
-- Nenhuma mensagem sai sem a SDR aprovar, uma por uma. Esta skill **não envia**. O envio é manual, pela Clint. O envio automático existe só pela skill `resgate-envio`, com autorização explícita do usuário.
+## 1. Pesquisar os negócios
 
-## Antes de começar
+- Origem "Campanha Resgate, Nov, Dez e Jan", `origin_id` `fe254f0e-36c1-4db8-a84e-c8f52bf75824`. Use `search_deals` com o `origin_id`, `limit` 100, paginando por `offset`.
+- Aplique o critério do pedido (tag, data, motivo de perda, funil). Datas falam da **inscrição** do lead (campo `data_de_inscricao` do contato): os cards do resgate foram todos criados entre 28 e 30/10. Critério vago: use a leitura mais simples e diga em uma linha qual usou.
+- Pediu N negócios: entregue N. Pule só quem não é do resgate e pegue o próximo:
+  - já teve reunião ou recebeu proposta: fica com o Iago;
+  - pediu para não ser procurado.
 
-1. **Conector da Clint:** confirme que as ferramentas `search_deals`, `get_contact_fields`, `list_contact_chats` e `get_chat_messages` respondem. Se não, peça para conectar a Clint (`/mcp`) e pare.
-2. **Pasta de trabalho:** `~/Metta-Resgate/` com `config.json`. Se não existir (ou se pedirem "Configura o resgate"), rode o `init` da skill `resgate-biblioteca` e pergunte o que estiver vazio no `config.json`: a pasta local do drive de criativos (`pasta_drive_anuncios`), quem envia as mensagens (`nome_sdr`) e os clientes que não podem aparecer em material (`clientes_proibidos`). Grave as respostas.
-3. **Leia inteiros:** `references/leitura-clint.md` e `references/mensagens.md`.
-4. **Data e hora de agora**, em Brasília.
+## 2. Informações do negócio
 
-## Pedidos
+Chamadas e campos em `references/clint.md`. Para cada lead:
+- quem é: nome, empresa ou segmento, cargo, faturamento;
+- cadastro: data de inscrição, funil, `utm_content`;
+- a dor que ele declarou;
+- histórico: quando foi atendido, quando conversaram, o que foi dito, por que foi perdido;
+- a conversa de WhatsApp de agora, em todos os números. É ela que diz qual mensagem escrever.
 
-| O usuário pede | O que fazer |
+Um lead de cada vez: nunca misture as informações de dois leads.
+
+## 3. Anúncio que converteu
+
+O ID é o começo do `utm_content`, até o número: `PP-SE-928-Capt-FB-VID-1-A-PRA-UMA-EMPRESA` → `PP-SE-928`. Sem ID (orgânico, Google, vazio): segue sem anúncio.
+
+## 4. Drive: achar, baixar, ler e guardar
+
+Primeiro procure `Metta-Resgate/criativos/<ID>.md` na pasta de trabalho. Se existir, use. Se não, siga `references/criativos.md` e grave a ficha. Cada anúncio é lido uma vez, e a pasta cresce a cada rodada.
+
+## 5. Mensagem
+
+Siga `references/mensagens.md`. Qual mensagem escrever:
+
+| Na conversa | Escreva |
 |---|---|
-| "Monta o lote ..." (motivo de perda, anúncio, lista de negócios ou quantidade) | **Lote** (abaixo) e mensagem 1 dos aptos |
-| "Ver respostas do resgate" | Para cada lead com arquivo em `saida/`, ler a conversa e, se ele respondeu, seguir o ponto da conversa |
-| "Resposta do <lead>: ..." ou "o <lead> respondeu" | Só esse lead: ler a conversa na Clint (não confiar só no texto colado) e seguir o ponto da conversa |
-| "Monta a biblioteca" | Skill `resgate-biblioteca` |
-| "Configura o resgate" | Passo 2 de "Antes de começar" |
+| A SDR ainda não mandou a ativação, ou o lead ainda não respondeu | Mensagem 2, pronta para quando ele responder |
+| Ele respondeu à ativação | Mensagem 2, ajustada ao que ele respondeu |
+| Ele respondeu à mensagem 2 | Mensagem 3, a partir do que ele disse e do que a mensagem 2 falou |
 
-## Lote
+A ativação ("Olá, neste número ainda falo com...?") é da SDR: não escreva.
 
-1. Liste os negócios abertos da origem do resgate (`search_deals` com `origin_id` do `config.json`, páginas de 100) e aplique o filtro pedido.
-2. Para cada negócio, **um de cada vez**, leia o lead conforme `leitura-clint.md` e monte o dossiê. Com mais de 10 leads, use um subagente por lead, passando os caminhos deste SKILL.md, das referências e do `config.json` e a hora de agora. Nunca misture dois leads no mesmo contexto.
-3. Aplique as travas de `leitura-clint.md`. Para a mensagem 1, valem também:
-   - mensagem do resgate já enviada → BLOQUEADO;
-   - conversa nos últimos `dias_conversa_em_andamento` dias → BLOQUEADO.
-4. **Anúncio:** procure o ID na biblioteca (`resgate-biblioteca/scripts/biblioteca.py ver <ID>`).
-   - Validado: segue.
-   - Não está no índice: chame a skill `resgate-biblioteca` para esse ID. O lead fica AGUARDA até a validação.
-   - Datado, proibido ou não localizado: segue sem anexo.
-5. **Limite do dia:** só os primeiros `limite_diario_mensagem_1` aptos recebem a mensagem 1. Os demais ficam para o próximo dia, na ordem.
-6. Escreva o arquivo de cada lead (formato abaixo) e o resumo `saida/_lote_<AAAA-MM-DD>.md`, com uma linha por lead: nome, telefone, anúncio, dor, status.
-7. Rode o conferidor e corrija até zerar:
-   ```
-   python3 <pasta-da-skill>/scripts/conferir.py ~/Metta-Resgate/saida
-   ```
-8. Mostre o resumo e **peça que a SDR aprove a lista** antes de qualquer envio.
+## Entrega
 
-## Ponto da conversa (a cada leitura)
-
-Leia todas as conversas do contato desde `inicio_campanha` e descubra a fase:
-
-| Encontrou na conversa | Fase | O que preparar |
-|---|---|---|
-| Nenhuma mensagem do resgate | Antes da 1 | Mensagem 1 (só se APTO) |
-| Mensagem 1 enviada, sem resposta do lead | Aguardando | Nada. Fica para a cadência de follow-up da SDR |
-| Resposta do lead depois da mensagem 1, mensagem 2 não enviada | Portão 1 | Mensagem 2 ou resposta curta (`mensagens.md`) |
-| Mensagem 2 enviada, sem resposta | Aguardando | Nada |
-| Resposta do lead depois da mensagem 2 (ou da 3) | Portão 2 | Mensagem 3 (`mensagens.md`) |
-| Horário combinado ou lead pediu para parar | Fim | Nada. Avisar a SDR |
-
-A mensagem 1 é reconhecida por "ainda falo com" ou "falo com" mais o nome. A mensagem 2, por "você se cadastrou". Mensagem com erro de entrega não conta como enviada: avise a SDR.
-
-**Janela de 24 horas (número oficial):** mostre quando ela fecha (última mensagem do lead + 24 h). A resposta ao lead deve sair em até 2 horas no horário comercial. Com a janela fechada, só sai modelo aprovado: avise a SDR em vez de preparar texto livre.
-
-## Arquivo de cada lead
-
-`~/Metta-Resgate/saida/<primeiro nome>_<8 primeiros caracteres do deal_id>.md`. As seções novas vão no fim do arquivo, sem apagar as anteriores.
+Para cada lead, no chat e em `Metta-Resgate/leads/<Nome>.md`:
 
 ````
-# <Nome> · <empresa, se houver>
-Status: <APTO | REVISAR: motivo | BLOQUEADO: motivo | AGUARDA: motivo>
+## <Nome> · <empresa ou segmento>
+- Cadastro: <dd/mm> · <funil> · anúncio <ID> (<formato>)
+- Histórico: <uma ou duas linhas: quando foi atendido, quando conversaram, por que foi perdido>
+- Dor: "<o que ele disse>" (<formulário | SDR | conversa>)
+- Anúncio para anexar: <link ou arquivo>
 
-<dossiê de leitura-clint.md>
-
-## Mensagem 1 · ativação · preparada em <dd/mm hh:mm>
-
-```
-Olá, neste número ainda falo com João?
-```
-
-## Mensagem 2 · preparada em <dd/mm hh:mm> · janela fecha <dd/mm hh:mm>
-
-Resposta do lead (não copiar): "<o que ele mandou>"
-Portão 1: <categoria>
-Anexo:
-- <caminho do arquivo de envio 1>
-- <caminho 2, se carrossel>
-
+Mensagem <2 | 3> (<quando enviar>):
 ```
 <mensagem>
 ```
-
-Dados usados (não copiar): data <...> (fonte) · dor "<frase>" ← "<original>" (fonte) · anúncio <ID>
-
-## Mensagem 3 · preparada em <dd/mm hh:mm> · janela fecha <dd/mm hh:mm>
-
-Resposta do lead (não copiar): "<...>"
-Portão 2: <número e nome da categoria>
-
-```
-<mensagem>
-```
-
-## Para a SDR (não copiar)
-- <o que fazer: mandar o anúncio antes do texto, preencher os horários, avisos>
 ````
 
-Resposta curta do portão 1 (número errado, quem é, outra pessoa, parar): seção `## Resposta · <motivo>` no mesmo formato.
+No fim, uma linha com quem foi pulado e por quê. Nada além disso.
 
-## Aprovação
+## Antes de entregar
 
-Mostre no chat, para cada mensagem preparada:
-- o resumo do lead;
-- a categoria da resposta e o trecho que levou a ela;
-- a mensagem num bloco único e o anexo;
-- os dados usados, com a fonte;
-- os alertas.
+- Confira cada mensagem pelas regras de `references/mensagens.md`. Se der para rodar scripts: `python3 <pasta-da-skill>/scripts/conferir.py Metta-Resgate/leads`.
+- Dado que não existe não é inventado: sem dor, use a variante do anúncio; sem anúncio, a variante sem anexo.
 
-A SDR aprova, edita, pede ajuste ou descarta:
-- **Ajuste:** reescreva e rode o conferidor de novo.
-- **Texto editado à mão:** grave no arquivo e rode o conferidor de novo.
+## Nunca
 
-## Checagem final (logo antes de a SDR enviar)
-
-Quando a SDR disser que vai enviar, ou antes de passar para a skill `resgate-envio`, releia a conversa na Clint e confira:
-1. o contato e o telefone são os do dossiê;
-2. não entrou mensagem nova depois do "Conversa lida até", em nenhum número. Se entrou, a mensagem é refeita;
-3. o negócio continua aberto e não apareceu negócio aberto em outro funil;
-4. no número oficial, a janela está aberta (mensagens 2 e 3);
-5. é horário comercial (`horario_comercial`);
-6. a mesma mensagem não foi enviada antes.
-
-Qualquer item falhou: não libere e diga qual.
-
-## O que nunca fazer
-
-- Mandar a mensagem 2 sem o "sim" do próprio lead, ou com data, dor ou anúncio para outra pessoa.
-- Inventar dor, data ou anúncio. Dado que falta vai para REVISAR.
-- Usar anúncio que não está validado na biblioteca.
-- Escrever preço, condição, plano ou duração do diagnóstico.
-- Montar mensagem sem reler a conversa na Clint.
-- Enviar mensagem, mover card, alterar campo ou tag pelo conector.
+- Escrever preço, condição ou plano.
+- Mandar a mensagem 2 para quem não é o lead (número errado, outra pessoa): responda curto, sem nenhum dado do cadastro.
+- Enviar sem a Larissa pedir.
+- Mover card, mudar campo ou tag na Clint.
