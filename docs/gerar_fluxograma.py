@@ -70,7 +70,7 @@ def rotulo(x, y, t, ancora="middle", tam=13):
 
 
 # ---------- caminho principal
-pilula(95, M, 170, 72, [("Pedido da Larissa", "b"), ("ex.: 5 negócios com a", "s"), ("tag Resgate Novembro", "s")])
+pilula(95, M, 170, 72, [("Pedido do usuário", "b"), ("ex.: 5 negócios com a", "s"), ("tag Resgate Novembro", "s")])
 seta([(180, M), (214, M)])
 caixa(289, M, 150, 62, [("1. Pesquisa os", "b"), ("negócios na Clint", "b")])
 seta([(364, M), (392, M)])
@@ -99,7 +99,7 @@ seta([(1695, B + 62), (1718, B + 62), (1718, B + 14), (1742, B + 14)])
 cilindro(1833, B, 182, 84, [("Anúncios guardados", "b"), ("copy e análise", "s")])
 
 # ---------- análise
-caixa(1600, T, 190, 56, [("Exemplos da Larissa", "b"), ("mensagens 2 e 3", "s")], "guarda")
+caixa(1600, T, 190, 56, [("Mensagens-modelo", "b"), ("do time, mensagens 2 e 3", "s")], "guarda")
 seta([(1695, T), (1788, T), (1788, M - 42)])
 caixa(1833, M, 210, 84, [("5. Claude analisa tudo", "b"), ("conversa + negócio +", "s"), ("copy do anúncio", "s")])
 seta([(1833, B - 42), (1833, M + 42)], duas=True)
@@ -117,7 +117,7 @@ for y in (T, B):
 seta([(2382, M), (2425, M)])
 
 # ---------- aprovação e envio
-caixa(2515, M, 180, 80, [("6. Mostra à Larissa", "b"), ("resumo do lead +", "s"), ("mensagem + anúncio", "s")])
+caixa(2515, M, 180, 80, [("6. Mostra ao usuário", "b"), ("resumo do lead +", "s"), ("mensagem + anúncio", "s")])
 seta([(2605, M), (2639, M)])
 losango(2704, M, 130, 98, [("Aprovada?", "n")])
 seta([(2704, M + 49), (2704, B - 26)]); rotulo(2718, 360, "não", "start")
@@ -128,7 +128,7 @@ losango(2883, M, 140, 104, [("Enviar pela", "n"), ("Clint?", "n")])
 seta([(2883, M - 52), (2883, T + 30)]); rotulo(2897, 182, "sim", "start")
 caixa(2883, T, 180, 60, [("Claude confere a", "n"), ("conversa e envia", "n")], "res")
 seta([(2883, M + 52), (2883, B - 24)]); rotulo(2897, 360, "não", "start")
-caixa(2883, B, 160, 48, [("Larissa envia", "n")], "res")
+caixa(2883, B, 160, 48, [("Usuário envia", "n")], "res")
 pilula(3063, M, 140, 56, [("Lead responde", "b")])
 seta([(2973, T), (3063, T), (3063, M - 30)])
 seta([(2963, B), (3063, B), (3063, M + 30)])

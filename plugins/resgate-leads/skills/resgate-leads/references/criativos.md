@@ -6,7 +6,7 @@ Use o acesso ao Drive que a sessão tiver: o conector do Google Drive ou a pasta
 
 1. Busque pelo ID (ex.: `PP-SE-928`). Vale o arquivo ou a pasta cujo nome **começa** com o ID. Cuidado: `PP-APLI-1159-...-NOVO-223` não é o `PP-APLI-223`.
 2. Não achou: abra a planilha "Blueprint_[PERPÉTUO] - 2025" (`1RvS3Iz-AemmR-LYPtDOMqq9IaKBVaPN6VNujKRUNV3U`), aba Criativos, na linha do ID. A coluna "Link no Drive" leva à pasta do lote. Dentro dela, o anúncio é o arquivo ou a subpasta que começa com o ID ou com o número (pasta `989`, arquivos `1140-1.jpg`). A planilha também traz tipo, headline e ângulo.
-3. Ainda não achou: peça para a Larissa arrastar o arquivo do anúncio para o chat. Se ela não tiver, siga sem anúncio.
+3. Ainda não achou: peça para o usuário arrastar o arquivo do anúncio para o chat. Se ele não tiver, siga sem anúncio.
 
 Versões Feed e Story do mesmo estático são o mesmo anúncio: use uma.
 

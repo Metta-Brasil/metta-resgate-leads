@@ -1,6 +1,6 @@
 ---
 name: resgate-leads
-description: Use quando a Larissa (ou outra SDR) pedir para trabalhar leads da Campanha Resgate na Clint, ou disser que um lead do resgate respondeu. Pesquisa os negócios, puxa as informações, identifica o anúncio que converteu o lead, acha esse anúncio no Drive, lê e guarda a copy, e escreve a mensagem para ela enviar, com base nos exemplos da Larissa.
+description: Use quando o usuário (SDR ou outra pessoa do time comercial) pedir para trabalhar leads da Campanha Resgate na Clint, ou disser que um lead do resgate respondeu. Pesquisa os negócios, puxa as informações, identifica o anúncio que converteu o lead, acha esse anúncio no Drive, lê e guarda a copy, e escreve a mensagem para o usuário enviar, com base nas mensagens-modelo do time.
 ---
 
 # Resgate de leads
@@ -11,16 +11,17 @@ A lógica é esta, nesta ordem:
 2. Puxar as informações de cada negócio.
 3. Identificar o anúncio que converteu o lead.
 4. Achar esse anúncio no Drive, baixar, ler e guardar.
-5. Escrever a mensagem com o contexto da conversa, as informações do negócio e a copy do anúncio, usando como base os exemplos da Larissa.
-6. Se ela pedir, enviar pela Clint (skill `resgate-envio`).
+5. Escrever a mensagem com o contexto da conversa, as informações do negócio e a copy do anúncio, usando como base as mensagens-modelo do time.
+6. Se o usuário pedir, enviar pela Clint (skill `resgate-envio`).
 
 ## 1. Pesquisar os negócios
 
-- Origem "Campanha Resgate, Nov, Dez e Jan", `origin_id` `fe254f0e-36c1-4db8-a84e-c8f52bf75824`. Use `search_deals` com o `origin_id`, `limit` 100, paginando por `offset`.
-- Aplique o critério do pedido (tag, data, motivo de perda, funil). Datas falam da **inscrição** do lead (campo `data_de_inscricao` do contato): os cards do resgate foram todos criados entre 28 e 30/10. Critério vago: use a leitura mais simples e diga em uma linha qual usou.
-- Pediu N negócios: entregue N. Pule só quem não é do resgate e pegue o próximo:
+- Monte a lista numa consulta só, com `execute_indicator_query` (modelo pronto em `references/clint.md`): origem do resgate, negócio aberto, tags e data de inscrição do pedido. A lista vem ordenada pela inscrição.
+- Datas falam da **inscrição** do lead (`data_de_inscricao` do contato): os cards do resgate foram todos criados entre 28 e 30/10. Critério vago ("início do mês"): use a leitura mais simples (dias 1 a 10) e diga em uma linha qual usou.
+- Pediu N negócios: entregue N. Siga a lista na ordem e pule só quem não é do resgate, pegando o próximo:
   - já teve reunião ou recebeu proposta: fica com o Iago;
   - pediu para não ser procurado.
+- Só pergunte se a lista inteira tiver menos de N negócios.
 
 ## 2. Informações do negócio
 
@@ -81,5 +82,5 @@ No fim, uma linha com quem foi pulado e por quê. Nada além disso.
 
 - Escrever preço, condição ou plano.
 - Mandar a mensagem 2 para quem não é o lead (número errado, outra pessoa): responda curto, sem nenhum dado do cadastro.
-- Enviar sem a Larissa pedir.
+- Enviar sem o usuário pedir.
 - Mover card, mudar campo ou tag na Clint.

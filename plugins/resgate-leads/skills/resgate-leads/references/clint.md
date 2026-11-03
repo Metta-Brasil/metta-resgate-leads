@@ -2,6 +2,29 @@
 
 Tudo aqui é leitura.
 
+## Selecionar os negócios do pedido (uma consulta só)
+
+Não leia contato por contato para filtrar, e não use a data de criação de outro negócio como atalho: use `execute_indicator_query`, que devolve a lista exata. Exemplo para "tags Sessão estratégica e Resgate Novembro, inscritos de 01 a 10/10/2026":
+
+```json
+{"query": {
+  "dimensions": ["Deal.id", "Contact.id", "Contact.name", "ContactFields.field_data_de_inscricao", "TagsList.tagsContact"],
+  "filters": [
+    {"member": "Origin.name", "operator": "equals", "values": ["Campanha Resgate, Nov, Dez e Jan"]},
+    {"member": "Deal.status", "operator": "equals", "values": ["OPEN"]},
+    {"member": "TagsList.tagsContact", "operator": "contains", "values": ["Resgate Novembro"]},
+    {"member": "TagsList.tagsContact", "operator": "contains", "values": ["Sessão estratégica"]},
+    {"member": "ContactFields.field_data_de_inscricao", "operator": "inDateRange", "values": ["2026-10-01", "2026-10-10"]}
+  ],
+  "order": {"ContactFields.field_data_de_inscricao": "asc"},
+  "limit": 200}}
+```
+
+- Um filtro `contains` por tag pedida. Sem data no pedido, tire o filtro de data.
+- Motivo de perda também é tag: `{"member": "TagsList.tagsContact", "operator": "contains", "values": ["Motivo: Interesse futuro"]}`.
+- Mais de 200 resultados: pagine com `"offset"`.
+- Em 03/11/2026 essa consulta devolveu 26 negócios.
+
 ## Chamadas, por lead
 
 | Para | Chamada |

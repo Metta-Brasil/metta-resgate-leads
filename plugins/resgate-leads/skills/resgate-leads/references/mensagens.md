@@ -1,10 +1,10 @@
 # Mensagens
 
-A base são os exemplos da Larissa. Use o texto dela e ajuste só o que o contexto pedir.
+A base são as mensagens-modelo do time comercial. Use o texto do modelo e ajuste só o que o contexto pedir.
 
 ## Mensagem 2 (quando o lead responde à ativação)
 
-Exemplo da Larissa:
+Modelo:
 
 ```
 Ah, maravilha, [Nome]!
@@ -44,11 +44,11 @@ Não repita a data nem o anúncio.
 | Resposta curta ou vaga | Uma pergunta simples |
 
 - **Mais de uma coisa na resposta:** pedido para parar vem antes de preço, e preço vem antes do resto.
-- **Perguntou duração, formato ou quem conduz:** não invente. Diga para a Larissa responder.
+- **Perguntou duração, formato ou quem conduz:** não invente. Diga para o usuário responder.
 
 ## Regras de toda mensagem
 
-- **Tom da Larissa:** WhatsApp, frases curtas, sem emoji, sem travessão, sem link.
+- **Tom do modelo:** WhatsApp, frases curtas, sem emoji, sem travessão, sem link.
 - **"Anúncio", nunca "criativo".**
 - **Nunca:**
   - preço, plano, condição ou Black;

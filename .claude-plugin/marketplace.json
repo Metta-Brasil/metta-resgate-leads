@@ -8,7 +8,7 @@
     {
       "name": "resgate-leads",
       "source": "./plugins/resgate-leads",
-      "description": "Resgate dos leads da Campanha Resgate na Clint: pesquisa os negócios, acha e lê no Drive o anúncio que converteu cada lead e escreve a mensagem para a SDR enviar. Envia pela Clint quando ela pedir."
+      "description": "Resgate dos leads da Campanha Resgate na Clint: pesquisa os negócios, acha e lê no Drive o anúncio que converteu cada lead e escreve a mensagem para o usuário enviar. Envia pela Clint quando o usuário pedir."
     }
   ]
 }
