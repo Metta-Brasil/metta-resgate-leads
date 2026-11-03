@@ -1,5 +1,15 @@
 # Resgate de leads · Metta
 
+## Baixar o plugin
+
+**[Baixar resgate-leads-plugin.zip](https://github.com/Metta-Brasil/metta-resgate-leads/releases/latest/download/resgate-leads-plugin.zip)**
+
+Link direto: `https://github.com/Metta-Brasil/metta-resgate-leads/releases/latest/download/resgate-leads-plugin.zip`
+
+Para instalar no app do Claude: abra a tela de **Plugins**, clique em **Enviar um plugin** e escolha esse arquivo. O zip é atualizado sozinho a cada mudança no plugin; o link continua o mesmo.
+
+Não use o botão verde **Code > Download ZIP** do GitHub: ele baixa o repositório inteiro, e o Claude recusa com o erro "plugin.json must be at .claude-plugin/plugin.json".
+
 ## Para que serve este repositório
 
 Este repositório tem uma função só: trabalhar a **Campanha Resgate** na Clint, os leads que se cadastraram, nunca tiveram reunião e esfriaram.
@@ -64,6 +74,7 @@ metta-resgate-leads/
 ├── README.md                          → este guia
 ├── docs/fluxograma.png                → o fluxograma do resgate
 ├── .gitignore                         → impede que dado de lead, anúncio baixado ou token subam
+├── .github/workflows/plugin-zip.yml   → gera o zip do plugin a cada mudança
 ├── .claude-plugin/
 │   └── marketplace.json               → a "loja" metta-resgate
 └── plugins/
