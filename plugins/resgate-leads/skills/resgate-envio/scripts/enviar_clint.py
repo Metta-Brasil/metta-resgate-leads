@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Envio pela API da Clint (só número WhatsApp Oficial). Usado pela skill resgate-envio.
 
-Token: variável CLINT_API_TOKEN ou arquivo Metta-Resgate/.clint_token na pasta de trabalho (uma linha).
-Use uma chave de API com permissão só de leitura de conversas/contatos e escrita de mensagens.
+Chave: arquivo Metta-Resgate/chave-clint.env na pasta de trabalho (linha CLINT_API_TOKEN=...).
+Se o arquivo não existe ou está sem chave, o script cria o arquivo, abre no editor de texto e para.
+A chave nunca é impressa nem pedida no chat.
 
-Comandos (os três primeiros só leem):
+Comandos (os quatro primeiros só leem):
+  configurar                               cria/abre o arquivo da chave e testa a chave na Clint
   numeros                                  números conectados e tipo
   modelos --numero ID                      modelos do número (nome, status, categoria, texto)
   conversa --contato ID                    conversas do contato: número, última mensagem, fim da janela
@@ -15,20 +17,69 @@ Antes de enviar, o script confere: número oficial e conectado; nenhuma mensagem
 depois de --lida-ate; janela de 24 h aberta (para texto e mídia); envio repetido.
 Erro da API volta como está, sem nova tentativa.
 """
-import argparse, datetime, hashlib, json, os, sys, urllib.error, urllib.parse, urllib.request
+import argparse, datetime, hashlib, json, os, shutil, subprocess, sys, urllib.error, urllib.parse, urllib.request
 
 API = "https://api.clint.digital"
 RAIZ = os.environ.get("RESGATE_RAIZ") or os.path.join(os.getcwd(), "Metta-Resgate")
 TZ = datetime.timezone(datetime.timedelta(hours=-3))
 
 
+ARQ_CHAVE = os.path.join(RAIZ, "chave-clint.env")
+MODELO_CHAVE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "chave-clint.env")
+
+
+def ler_chave(arq):
+    """Valor de CLINT_API_TOKEN no arquivo, ou vazio."""
+    if not os.path.exists(arq):
+        return ""
+    for linha in open(arq, encoding="utf-8-sig"):
+        linha = linha.strip()
+        if linha.startswith("CLINT_API_TOKEN"):
+            return linha.split("=", 1)[1].strip().strip('"').strip("'") if "=" in linha else ""
+    return ""
+
+
+def abrir_no_editor(arq):
+    """Tenta abrir o arquivo no editor de texto do computador. Devolve True se conseguiu."""
+    try:
+        if sys.platform == "darwin":
+            cmd = ["open", "-e", arq]
+        elif sys.platform.startswith("win"):
+            cmd = ["notepad.exe", arq]
+        elif shutil.which("xdg-open") and (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+            cmd = ["xdg-open", arq]
+        else:
+            return False  # sem tela (ex.: máquina virtual do Cowork): a pessoa abre pela pasta
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            return proc.wait(timeout=3) == 0
+        except subprocess.TimeoutExpired:
+            return True  # editor aberto e ainda rodando
+    except Exception:
+        return False
+
+
+def preparar_arquivo_chave():
+    """Cria o arquivo da chave (sem chave) se ainda não existe, e tenta abrir para a pessoa preencher."""
+    os.makedirs(RAIZ, exist_ok=True)
+    if not os.path.exists(ARQ_CHAVE):
+        shutil.copyfile(MODELO_CHAVE, ARQ_CHAVE)
+        try:
+            os.chmod(ARQ_CHAVE, 0o600)
+        except OSError:
+            pass
+    abriu = abrir_no_editor(ARQ_CHAVE)
+    print("SEM CHAVE DA CLINT.")
+    print(f"Arquivo: {os.path.abspath(ARQ_CHAVE)}")
+    print("Aberto no editor de texto." if abriu else "Não consegui abrir sozinho: abra este arquivo pela pasta Metta-Resgate.")
+    print("A pessoa cola a chave depois de CLINT_API_TOKEN=, salva e avisa. Nunca pela conversa.")
+
+
 def token():
-    t = os.environ.get("CLINT_API_TOKEN")
-    for p in (os.path.join(RAIZ, ".clint_token"), os.path.expanduser("~/Metta-Resgate/.clint_token")):
-        if not t and os.path.exists(p):
-            t = open(p).read().strip()
+    t = os.environ.get("CLINT_API_TOKEN") or ler_chave(ARQ_CHAVE)
     if not t:
-        sys.exit("Sem token da Clint. Peça o token e grave em Metta-Resgate/.clint_token")
+        preparar_arquivo_chave()
+        sys.exit(2)
     return t
 
 
@@ -42,10 +93,16 @@ def chamar(metodo, caminho, corpo=None):
             return r.status, json.loads(r.read() or b"{}")
     except urllib.error.HTTPError as e:
         corpo_err = e.read()
+        if e.code in (401, 403) and b"1010" not in corpo_err:
+            sys.exit(f"A Clint recusou a chave ({e.code}). Confira a chave no arquivo {os.path.abspath(ARQ_CHAVE)} "
+                     "e as permissões dela. Nada foi enviado.")
         try:
             return e.code, json.loads(corpo_err)
         except Exception:
             return e.code, {"raw": corpo_err[:300].decode("utf-8", "replace")}
+    except urllib.error.URLError as e:
+        sys.exit(f"Sem acesso a api.clint.digital ({e.reason}). No Cowork e no chat, o administrador do Claude "
+                 "precisa liberar o endereço api.clint.digital nas configurações de rede. Nada foi enviado.")
 
 
 def dados(resp):
@@ -55,6 +112,17 @@ def dados(resp):
 def iso(s):
     d = datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
     return d if d.tzinfo else d.replace(tzinfo=TZ)
+
+
+def cmd_configurar(a):
+    token()  # sem chave: cria, abre o arquivo e para
+    st, r = chamar("GET", "/v2/channel-accounts?limit=100")
+    if st != 200:
+        sys.exit(f"A Clint respondeu {st}: {r}")
+    oficiais = [c for c in dados(r) if c.get("type") == "WHATSAPP_OFFICIAL" and c.get("status") == "CONNECTED"]
+    print(f"CHAVE OK. Números WhatsApp Oficial conectados: {len(oficiais)}")
+    for c in oficiais:
+        print(f"  {c['id']}  {c.get('name', '')}")
 
 
 def cmd_numeros(a):
@@ -171,13 +239,14 @@ def cmd_enviar(a):
         f.write(json.dumps(registro, ensure_ascii=False) + "\n")
     print(f"\nRESPOSTA {st}: {json.dumps(r, ensure_ascii=False)}")
     if st >= 300:
-        print("Não repita o envio. Leve o erro para a SDR (402 = sem saldo; 409 = conversa de outro parceiro; 400 = ver mensagem).")
+        print("Não repita o envio. Leve o erro para o usuário (402 = sem saldo; 409 = conversa de outro parceiro; 400 = ver mensagem).")
         sys.exit(1)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     s = p.add_subparsers(dest="cmd", required=True)
+    s.add_parser("configurar").set_defaults(f=cmd_configurar)
     s.add_parser("numeros").set_defaults(f=cmd_numeros)
     x = s.add_parser("modelos"); x.add_argument("--numero", required=True); x.set_defaults(f=cmd_modelos)
     x = s.add_parser("conversa"); x.add_argument("--contato", required=True); x.set_defaults(f=cmd_conversa)

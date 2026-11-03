@@ -59,7 +59,19 @@ O plugin cria a pasta `Metta-Resgate` na pasta de trabalho:
 
 - A **Clint** conectada.
 - O **Google Drive** conectado (ou a pasta do Drive no computador). Se não conseguir baixar um anúncio, ele pede para o usuário arrastar o arquivo para o chat.
-- Para **enviar pela Clint**: o token da API da Clint, que ele pede na primeira vez, e um número WhatsApp Oficial.
+- Para **enviar pela Clint**: a chave da API da Clint no computador do usuário (veja abaixo) e um número WhatsApp Oficial.
+
+## Chave da Clint para o envio
+
+O conector da Clint lê os dados, mas não envia mensagem. Quem envia é o Claude, pela API da Clint, e para isso ele precisa da chave.
+
+1. Na primeira vez que o usuário pede um envio, o Claude cria o arquivo `Metta-Resgate/chave-clint.env` na pasta de trabalho e tenta abrir no editor de texto. Se não abrir sozinho, o Claude diz onde o arquivo está.
+2. O usuário cola a chave logo depois de `CLINT_API_TOKEN=`, salva e avisa o Claude.
+3. O Claude testa a chave e mostra os números WhatsApp Oficial conectados.
+
+A chave nunca vai pelo chat, nunca entra neste repositório e só o script do envio lê o arquivo. Quem gera a chave é um administrador da Clint, em Configurações > Segurança > API. O melhor é uma chave só para o plugin, com permissão apenas para o que o envio usa (mensagens, conversas e números).
+
+No **Cowork** e no **chat**, o administrador do Claude da empresa precisa liberar o endereço `api.clint.digital` nas configurações de rede (Configurações da organização > Capacidades). No **Claude Code** não precisa. Sem essa liberação, o Claude avisa e o envio é feito pelo usuário, na caixa da Clint.
 
 ## Instalar pelo Claude Code (opcional)
 
@@ -86,9 +98,10 @@ metta-resgate-leads/
         │   ├── references/mensagens.md
         │   └── scripts/               → conferir.py, midia.py
         └── resgate-envio/             → envio pela Clint, quando pedido
-            └── scripts/enviar_clint.py
+            ├── scripts/enviar_clint.py
+            └── templates/chave-clint.env → modelo do arquivo da chave (vazio)
 ```
 
 ## Importante
 
-Este repositório é público. Nenhum dado de lead, conversa, anúncio baixado ou token entra aqui.
+Este repositório é público. Nenhum dado de lead, conversa, anúncio baixado ou chave entra aqui.

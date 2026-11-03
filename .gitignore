@@ -11,9 +11,13 @@ trabalho/
 *.png
 *.pdf
 .env
+*.env
 *.token
 __pycache__/
 .DS_Store
 
 # O fluxograma da documentação pode subir
 !docs/fluxograma.png
+
+# Modelo vazio do arquivo da chave (sem chave) pode subir
+!plugins/resgate-leads/skills/resgate-envio/templates/chave-clint.env
