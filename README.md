@@ -18,7 +18,9 @@ A Larissa pede ao Claude os negócios que quer trabalhar, e o plugin entrega, pa
 
 ## Como funciona
 
-<img src="docs/fluxograma.png" alt="Fluxograma do resgate" width="480">
+<a href="docs/fluxograma.png"><img src="docs/fluxograma.png" alt="Fluxograma do resgate" width="100%"></a>
+
+Clique no fluxograma para ver em tamanho real.
 
 1. **Pesquisa os negócios.** O Claude busca na Clint os negócios da Campanha Resgate com o critério do pedido, por exemplo "5 negócios com a tag Resgate Novembro".
 2. **Puxa as informações.** Para cada lead, ele levanta:
@@ -71,7 +73,7 @@ O plugin cria a pasta `Metta-Resgate` na pasta de trabalho:
 ```
 metta-resgate-leads/
 ├── README.md                          → este guia
-├── docs/fluxograma.png                → o fluxograma
+├── docs/fluxograma.png                → o fluxograma (fonte: docs/gerar_fluxograma.py)
 ├── .github/workflows/plugin-zip.yml   → gera o zip do plugin a cada mudança
 ├── .claude-plugin/marketplace.json    → para instalar pelo Claude Code
 └── plugins/resgate-leads/             → o plugin
