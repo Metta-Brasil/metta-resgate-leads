@@ -1,0 +1,14 @@
+{
+  "name": "metta-resgate",
+  "description": "Resgate de leads da Metta que nunca tiveram reunião",
+  "owner": {
+    "name": "Metta Brasil"
+  },
+  "plugins": [
+    {
+      "name": "resgate-leads",
+      "source": "./plugins/resgate-leads",
+      "description": "Resgate dos leads da Campanha Resgate na Clint: biblioteca de anúncios, lote com travas, mensagens 1, 2 e 3 prontas para a SDR e envio opcional pela Clint."
+    }
+  ]
+}

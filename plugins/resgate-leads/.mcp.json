@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "clint": {
+      "type": "http",
+      "url": "https://mcp.clint.digital"
+    }
+  }
+}

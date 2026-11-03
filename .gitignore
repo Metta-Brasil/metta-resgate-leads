@@ -1,0 +1,16 @@
+# Repositório público: nada de dado de lead, conversa, anúncio baixado, biblioteca ou token.
+Metta-Resgate/
+biblioteca/
+saida/
+trabalho/
+*.mp4
+*.mov
+*.wav
+*.jpg
+*.jpeg
+*.png
+*.pdf
+.env
+*.token
+__pycache__/
+.DS_Store
