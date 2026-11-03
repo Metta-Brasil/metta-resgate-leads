@@ -1,0 +1,73 @@
+flowchart LR
+  subgraph F0["FASE 0 · Biblioteca de anúncios<br/>uma vez por anúncio, antes do 1º lote"]
+    direction TB
+    a1["Anúncios da campanha<br/>ID no utm_content"] --> a2["Localiza no Drive pela<br/>planilha de criativos"]
+    a2 --> a3{"Formato?"}
+    a3 -->|"estático ou carrossel"| a4["Lê texto e imagem<br/>de cada lâmina"]
+    a3 -->|"vídeo"| a5["Transcreve a fala e<br/>lê o texto da tela"]
+    a3 -->|"não achou"| a6["Não localizado:<br/>lead segue sem anexo"]
+    a4 --> a7["Ficha do anúncio<br/>+ checagem de conteúdo"]
+    a5 --> a7
+    a7 --> a8["Arquivo de envio<br/>vídeo até 16 MB<br/>imagem até 5 MB"]
+    a8 --> a9{"Lari valida?"}
+    a9 -->|"não"| a7
+    a9 -->|"sim"| a10[("Biblioteca<br/>validada")]
+  end
+
+  subgraph F1["FASE 1 · Lote e travas<br/>a cada rodada"]
+    direction TB
+    b1["Pedido ao Claude:<br/>lote, modo de envio,<br/>número que envia"] --> b2["Negócios do lote<br/>na Clint"]
+    b2 --> b3["Por lead: contato certo,<br/>histórico, conversas em<br/>todos os números, anúncio"]
+    b3 --> b4{"Travas"}
+    b4 -->|"bloqueado<br/>ou revisar"| b5["Fora do envio,<br/>com o motivo"]
+    b4 -->|"apto"| b6{"SDR aprova<br/>a lista?"}
+    b6 -->|"sim"| b7["Lista do lote<br/>aprovada"]
+  end
+
+  subgraph F2["FASE 2 · Mensagem 1<br/>ativação"]
+    direction TB
+    c1["Checagem final"] --> c2["Envio pela Clint<br/>número oficial:<br/>modelo aprovado"]
+    c2 --> c3{"Respondeu?"}
+    c3 -->|"não"| c4["Cadência de quem<br/>não responde<br/>a definir"]
+    c3 -->|"sim"| c5["Resposta do lead<br/>na Clint"]
+  end
+
+  subgraph F3["FASE 3 · Mensagem 2"]
+    direction TB
+    d1{"Portão 1:<br/>é o lead?"}
+    d1 -->|"não é, número<br/>errado ou parar"| d2["Resposta curta,<br/>sem dado do<br/>cadastro, encerra"]
+    d1 -->|"sim"| d3["Monta a mensagem 2:<br/>dossiê + ficha<br/>do anúncio"]
+    d3 --> d4["Checagem<br/>automática"]
+    d4 --> d5{"SDR aprova?"}
+    d5 -->|"não"| d6["Refaz com<br/>o feedback"]
+    d6 --> d4
+    d5 -->|"sim"| d7["Checagem final"]
+    d7 --> d8["Envio pela Clint:<br/>anúncio, depois o texto"]
+  end
+
+  subgraph F4["FASE 4 · Mensagem 3"]
+    direction TB
+    e1["Lê a mensagem 2<br/>como saiu + tudo o<br/>que o lead respondeu"] --> e2{"Portão 2:<br/>o que ele<br/>respondeu?"}
+    e2 --> e3["Monta a mensagem 3<br/>pela categoria"]
+    e3 --> e4["Checagem<br/>automática"]
+    e4 --> e5{"SDR aprova?"}
+    e5 -->|"não"| e6["Refaz com<br/>o feedback"]
+    e6 --> e4
+    e5 -->|"sim"| e7["Checagem final"]
+    e7 --> e8["Envio pela Clint"]
+    e8 --> e9["Agendamento com<br/>o especialista +<br/>dossiê no negócio"]
+  end
+
+  F0 -.->|"anúncios validados"| F1
+  F1 -->|"lista aprovada"| F2
+  F2 -->|"lead respondeu"| F3
+  F3 -->|"lead respondeu"| F4
+
+  classDef decisao fill:#fff8e1,stroke:#b8860b,color:#111
+  classDef parar fill:#fdecea,stroke:#c0392b,color:#111
+  classDef base fill:#eaf5ec,stroke:#2e7d32,color:#111
+  classDef envio fill:#eef3fb,stroke:#5b7db1,color:#111
+  class a3,a9,b4,b6,c3,d1,d5,e2,e5 decisao
+  class a6,b5,d2 parar
+  class a10,b7,e9 base
+  class c1,c2,d7,d8,e7,e8 envio

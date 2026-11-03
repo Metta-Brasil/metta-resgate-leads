@@ -15,11 +15,54 @@ Para cada lead, o plugin:
 
 **O envio é manual**, pela Clint, depois da aprovação da SDR. O envio automático pela API da Clint existe, mas só roda com autorização explícita de quem está usando.
 
+## Como funciona
+
+![Fluxograma do resgate](docs/fluxograma.png)
+
+O resgate tem cinco etapas. A primeira acontece uma vez para cada anúncio. As outras se repetem a cada lote de leads.
+
+**0. Biblioteca de anúncios (uma vez por anúncio).** Todo lead chegou por um anúncio. Antes de falar com qualquer lead, o Claude acha esse anúncio no Drive e lê o que ele diz. No vídeo, ele transcreve a fala. Depois confere se o anúncio ainda pode ser usado hoje: sem promessa vencida, sem número antigo, sem cliente que não pode aparecer. Também prepara uma versão leve do arquivo, que o WhatsApp aceita. Uma pessoa confere e aprova, e só anúncio aprovado vai para lead. Como o mesmo anúncio serve a muitos leads, ele é conferido uma vez só.
+
+**1. Lote e travas.** Você diz quais leads quer trabalhar, por exemplo todos com o motivo "Interesse futuro". O Claude lê cada um na Clint:
+- quando se cadastrou;
+- por qual anúncio;
+- que problema contou;
+- tudo o que já foi conversado, em todos os números.
+
+Depois ele separa quem não pode receber mensagem:
+- quem já teve reunião;
+- quem está negociando em outro funil;
+- quem pediu para não ser procurado;
+- quem já recebeu o resgate;
+- quem está conversando agora com alguém da Metta.
+
+Você confere a lista e aprova.
+
+**2. Mensagem 1.** Uma pergunta curta: "Olá, neste número ainda falo com [nome]?". Ela só confirma que o número ainda é da pessoa. Quem não responde fica para o follow-up da SDR.
+
+**3. Mensagem 2.** Quando a pessoa responde, o Claude lê a resposta antes de qualquer coisa.
+- Se for o próprio lead, ele prepara a mensagem 2: o anúncio pelo qual o lead se cadastrou, a data do cadastro e o problema que ele contou.
+- Se for número errado, outra pessoa ou pedido para parar, não vai nada disso, só uma resposta curta e educada. Os dados do lead nunca chegam a outra pessoa.
+
+**4. Mensagem 3.** Quando o lead responde à mensagem 2, o Claude lê o que foi enviado de verdade e o que ele respondeu. Então escreve a resposta para aquele caso:
+- se o problema continua, oferece dois horários com o especialista;
+- se ele perguntou preço, explica que a conversa com o especialista vem antes;
+- se ele já resolveu ou pediu para parar, encerra com educação.
+
+**Em toda mensagem:**
+- antes de mostrar, o Claude confere o texto: campo vazio, preço, emoji, palavra que não pode;
+- você aprova, pede ajuste ou edita;
+- logo antes do envio, o Claude relê a conversa. Se o lead mandou algo novo nesse meio tempo, a mensagem é refeita;
+- quem envia é a SDR, pela Clint. O Claude só envia se você autorizar com todas as letras.
+
+O desenho editável do fluxograma está em `docs/fluxograma.mmd` (abre em mermaid.live).
+
 ## Como o repositório é organizado
 
 ```
 metta-resgate-leads/
 ├── README.md                          → este guia
+├── docs/fluxograma.png                → o fluxograma do resgate
 ├── .gitignore                         → impede que dado de lead, anúncio baixado ou token subam
 ├── .claude-plugin/
 │   └── marketplace.json               → a "loja" metta-resgate

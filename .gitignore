@@ -14,3 +14,6 @@ trabalho/
 *.token
 __pycache__/
 .DS_Store
+
+# O fluxograma da documentação pode subir
+!docs/fluxograma.png
